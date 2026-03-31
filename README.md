@@ -61,3 +61,35 @@
 
 > "The secret of getting ahead is getting started."
 > — Mark Twain
+
+## Star Trek: The Next Generation Quotes
+
+> "Things are only impossible until they're not."
+> — Captain Jean-Luc Picard
+
+> "Make it so."
+> — Captain Jean-Luc Picard
+
+> "Resistance is futile."
+> — The Borg
+
+> "It is possible to commit no mistakes and still lose. That is not weakness, that is life."
+> — Captain Jean-Luc Picard
+
+> "The first duty of every Starfleet officer is to the truth."
+> — Captain Jean-Luc Picard
+
+> "Seize the time, Meribor — live now! Make now always the most precious time. Now will never come again."
+> — Captain Jean-Luc Picard
+
+> "There are four lights!"
+> — Captain Jean-Luc Picard
+
+> "If we're going to be damned, let's be damned for what we really are."
+> — Captain Jean-Luc Picard
+
+> "You know, there are some words I've known since I was a schoolboy: 'With the first link, the chain is forged. The first speech censured, the first thought forbidden, the first freedom denied, chains us all irrevocably.'"
+> — Captain Jean-Luc Picard
+
+> "I am not a merry man."
+> — Lieutenant Worf
