@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"strconv"
@@ -11,6 +12,11 @@ import (
 )
 
 const boardSize = 10
+const (
+	waterGlyph = "~"
+	hitGlyph   = "X"
+	missGlyph  = "○"
+)
 
 type Coord struct {
 	Row int
@@ -65,7 +71,7 @@ type AI struct {
 }
 
 var fleet = []ShipSpec{
-	{Name: "Carrier", Size: 5, Symbol: 'C', Art: []string{"   __/___", " _____/______|", " \\              ", " ~~~~~~~~~~~~~~~"}},
+	{Name: "Carrier", Size: 5, Symbol: 'C', Art: []string{"   __/___", " _____/______|", " \\", " ~~~~~~~~~~~~~~~"}},
 	{Name: "Battleship", Size: 4, Symbol: 'B', Art: []string{"   |\\", " __|_\\__", "|  BATTLE |", "~~~~~~~~~~~"}},
 	{Name: "Cruiser", Size: 3, Symbol: 'R', Art: []string{"    /\\", " __/==\\__", "|  CRUISE |", "~~~~~~~~~~~"}},
 	{Name: "Submarine", Size: 3, Symbol: 'S', Art: []string{"   ___", " _/___\\_", "|_SUB___|", "  \\___/"}},
@@ -85,7 +91,8 @@ const (
 func main() {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	reader := bufio.NewReader(os.Stdin)
-	color := os.Getenv("NO_COLOR") == ""
+	_, noColor := os.LookupEnv("NO_COLOR")
+	color := !noColor
 
 	showTitle(color)
 	promptEnter(reader, "Press Enter to start your naval campaign...")
@@ -112,12 +119,7 @@ func main() {
 			promptEnter(reader, "Press Enter to continue...")
 			continue
 		}
-		hit, sunk, already := computerBoard.ReceiveShot(shot)
-		if already {
-			fmt.Println(colorize(yellow, "You already fired there."))
-			promptEnter(reader, "Press Enter to pick another target...")
-			continue
-		}
+		hit, sunk, _ := computerBoard.ReceiveShot(shot)
 		playerStats.Shots++
 		if hit {
 			playerStats.Hits++
@@ -337,7 +339,7 @@ func (b *Board) AllSunk() bool {
 func parseCoordinate(input string) (Coord, error) {
 	in := strings.ToUpper(strings.TrimSpace(input))
 	if len(in) < 2 || len(in) > 3 {
-		return Coord{}, fmt.Errorf("invalid coordinate")
+		return Coord{}, fmt.Errorf("invalid coordinate format (use A1-J10)")
 	}
 	col := int(in[0] - 'A')
 	if col < 0 || col >= boardSize {
@@ -430,7 +432,7 @@ func showBoards(playerBoard *Board, tracking [boardSize][boardSize]ShotOutcome, 
 func showStatus(playerBoard, computerBoard *Board, p, c Stats, color bool) {
 	playerRemain := shipsRemaining(playerBoard)
 	computerRemain := shipsRemaining(computerBoard)
-	fmt.Printf("\n%s Ships remaining - You: %d | Computer: %d%s\n", colorize(yellow, "Status:"), playerRemain, computerRemain, reset)
+	fmt.Printf("\n%s Ships remaining - You: %d | Computer: %d\n", colorize(yellow, "Status:"), playerRemain, computerRemain)
 	if p.Shots > 0 {
 		fmt.Printf("Your accuracy: %.1f%% (%d/%d)\n", hitPercent(p), p.Hits, p.Shots)
 	}
@@ -455,13 +457,13 @@ func (b *Board) RenderOwn(color bool) []string {
 		line := fmt.Sprintf("%2d ", r+1)
 		for c := 0; c < boardSize; c++ {
 			cell := b.Cells[r][c]
-			glyph := "~"
+			glyph := waterGlyph
 			style := blue
 			if cell.Hit && cell.Ship != nil {
-				glyph = "X"
+				glyph = hitGlyph
 				style = red
 			} else if cell.Hit {
-				glyph = "○"
+				glyph = missGlyph
 				style = gray
 			} else if cell.Ship != nil {
 				glyph = string(cell.Ship.Symbol)
@@ -479,14 +481,14 @@ func renderTracking(tracking [boardSize][boardSize]ShotOutcome, color bool) []st
 	for r := 0; r < boardSize; r++ {
 		line := fmt.Sprintf("%2d ", r+1)
 		for c := 0; c < boardSize; c++ {
-			glyph := "~"
+			glyph := waterGlyph
 			style := blue
 			switch tracking[r][c] {
 			case Hit:
-				glyph = "X"
+				glyph = hitGlyph
 				style = red
 			case Miss:
-				glyph = "○"
+				glyph = missGlyph
 				style = gray
 			}
 			line += colorizeMaybe(style, glyph, color) + " "
@@ -503,13 +505,16 @@ func headerLine() string {
 
 func promptText(reader *bufio.Reader, prompt string) string {
 	fmt.Print(prompt + " ")
-	in, _ := reader.ReadString('\n')
+	in, err := reader.ReadString('\n')
+	if err != nil && err != io.EOF {
+		fmt.Fprintln(os.Stderr, "failed to read input from terminal:", err)
+	}
 	return strings.TrimSpace(in)
 }
 
 func promptEnter(reader *bufio.Reader, msg string) {
 	fmt.Print(msg)
-	reader.ReadString('\n')
+	_, _ = reader.ReadString('\n')
 }
 
 func showTitle(color bool) {
@@ -561,9 +566,9 @@ func printArt(art []string, prefix string, color bool) {
 
 func showEndGame(playerWon bool, p, c Stats, color bool) {
 	if playerWon {
-		fmt.Println(colorizeMaybe(green, bold+"\nVICTORY! All enemy ships destroyed."+reset, color))
+		fmt.Println(colorizeMaybe(green, "\nVICTORY! All enemy ships destroyed.", color))
 	} else {
-		fmt.Println(colorizeMaybe(red, bold+"\nDEFEAT! Your fleet has been sunk."+reset, color))
+		fmt.Println(colorizeMaybe(red, "\nDEFEAT! Your fleet has been sunk.", color))
 	}
 	fmt.Println("\nBattle Summary")
 	fmt.Printf("You:      shots=%d hits=%d accuracy=%.1f%%\n", p.Shots, p.Hits, hitPercent(p))

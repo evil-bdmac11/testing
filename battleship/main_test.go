@@ -61,7 +61,6 @@ func TestBoardPlacementAndSinking(t *testing.T) {
 func TestAITargetsAdjacentAfterHit(t *testing.T) {
 	ai := NewAI(rand.New(rand.NewSource(1)))
 	hitCell := Coord{Row: 5, Col: 5}
-	ai.shotSet[hitCell] = true
 	ai.RegisterResult(hitCell, true, false)
 	next := ai.NextShot()
 	dr := next.Row - hitCell.Row

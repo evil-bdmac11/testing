@@ -6,7 +6,7 @@ This repository now includes a complete command-line implementation of **Battles
 
 All game code lives in:
 
-- `/home/runner/work/testing/testing/battleship`
+- `./battleship/`
 
 ## Features
 
